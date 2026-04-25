@@ -18,15 +18,24 @@ const PORT = process.env.PORT || 5000;
 
 connectDB();
 
+const stripSlash = (s) => s.replace(/\/+$/, '');
 const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173')
   .split(',')
-  .map((s) => s.trim());
+  .map((s) => stripSlash(s.trim()))
+  .filter(Boolean);
 
 app.use(
   cors({
     origin: (origin, cb) => {
       if (!origin) return cb(null, true);
-      if (allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
+      const o = stripSlash(origin);
+      if (
+        allowedOrigins.includes(o) ||
+        allowedOrigins.includes('*') ||
+        /\.vercel\.app$/i.test(new URL(o).hostname) ||
+        /\.onrender\.com$/i.test(new URL(o).hostname) ||
+        /^https?:\/\/localhost(:\d+)?$/i.test(o)
+      ) {
         return cb(null, true);
       }
       return cb(new Error('Not allowed by CORS'));
